@@ -1,0 +1,53 @@
+{
+    "package": {
+        "package_name": "net.intellivoid.verbose_adventure",
+        "name": "VerboseAdventure",
+        "version": "1.0.0.0",
+        "author": "Zi Xing Narrakas",
+        "organization": "Intellivoid",
+        "description": "An advanced event logging library for PHP programs",
+        "url": "https://github.com/Intellivoid/VerboseAdventure",
+        "dependencies": [],
+        "configuration": {
+            "autoload_method": "generated_spl",
+            "main": null,
+            "post_installation": [],
+            "pre_installation": []
+        }
+    },
+    "components": [
+        {
+            "required": true,
+            "file": "Utilities/Converter.php"
+        },
+        {
+            "required": true,
+            "file": "Utilities/Validator.php"
+        },
+        {
+            "required": true,
+            "file": "Abstracts/EventType.php"
+        },
+        {
+            "required": true,
+            "file": "Abstracts/Options/ExceptionToDumpOptions.php"
+        },
+        {
+            "required": true,
+            "file": "Abstracts/Options/EventToStringOptions.php"
+        },
+        {
+            "required": true,
+            "file": "Exceptions/CannotFindSystemLogDirectoryException.php"
+        },
+        {
+            "required": true,
+            "file": "VerboseAdventure.php"
+        },
+        {
+            "required": true,
+            "file": "Objects/Event.php"
+        }
+    ],
+    "files": []
+}
