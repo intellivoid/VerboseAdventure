@@ -101,7 +101,7 @@
                 throw new CannotFindSystemLogDirectoryException("Cannot find the path '$path'");
             }
 
-            $this->logging_path = $path . DIRECTORY_SEPARATOR . Converter::nameSafe($this->name);
+            $this->logging_path = $path . DIRECTORY_SEPARATOR . "php" . DIRECTORY_SEPARATOR . Converter::nameSafe($this->name);
             $this->exception_dumps_path = $this->logging_path . DIRECTORY_SEPARATOR . "exceptions";
             $this->log_archive_path = $this->logging_path . DIRECTORY_SEPARATOR . "archives";
 
