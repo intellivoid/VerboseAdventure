@@ -293,7 +293,7 @@
             ]);
 
             if(self::$stdout)
-                print($output . PHP_EOL);
+                print($output);
             self::writeToStream($this->logging_path, $output);
         }
 
@@ -363,7 +363,7 @@
             ]);
 
             if(self::$stdout)
-                print($output . PHP_EOL);
+                print($output);
 
             self::writeToStream(self::getGenericLoggingPath() . DIRECTORY_SEPARATOR . "runtime", $output);
         }
