@@ -1,7 +1,7 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
     /** @noinspection PhpUnused */
-
 
     namespace VerboseAdventure;
 
@@ -41,7 +41,7 @@
          *
          * @var bool|null
          */
-        public $stdout;
+        public static $stdout = false;
 
         /**
          * The Unix Timestamp for when this class checked the structure of the file path
@@ -267,6 +267,7 @@
          * @param string $event_type
          * @param string $message
          * @param string|null $module
+         * @noinspection DuplicatedCode
          */
         public function log(string $event_type, string $message, ?string $module=null)
         {
@@ -282,15 +283,18 @@
             $EventObject->event_type = $event_type;
             $EventObject->timestamp = (int)time();
 
-
-            self::writeToStream($this->logging_path, $EventObject->toString([
+            $output = $EventObject->toString([
                 EventToStringOptions::IncludeVendor,
                 EventToStringOptions::IncludeModule,
                 EventToStringOptions::IncludeTimestamp,
                 EventToStringOptions::IncludeEventType,
                 EventToStringOptions::IncludeInfoEventType,
                 EventToStringOptions::IncludeNewLine
-            ]));
+            ]);
+
+            if(self::$stdout)
+                print($output . PHP_EOL);
+            self::writeToStream($this->logging_path, $output);
         }
 
 
@@ -333,6 +337,7 @@
          * @param string|null $module
          * @throws CannotFindSystemLogDirectoryException
          * @throws CannotFindSystemLogDirectoryException
+         * @noinspection DuplicatedCode
          */
         public static function logGlobal(string $event_type, string $message, ?string $module=null)
         {
@@ -348,15 +353,19 @@
             $EventObject->event_type = $event_type;
             $EventObject->timestamp = (int)time();
 
-
-            self::writeToStream(self::getGenericLoggingPath() . DIRECTORY_SEPARATOR . "runtime", $EventObject->toString([
+            $output = $EventObject->toString([
                 EventToStringOptions::IncludeVendor,
                 EventToStringOptions::IncludeModule,
                 EventToStringOptions::IncludeTimestamp,
                 EventToStringOptions::IncludeEventType,
                 EventToStringOptions::IncludeInfoEventType,
                 EventToStringOptions::IncludeNewLine
-            ]));
+            ]);
+
+            if(self::$stdout)
+                print($output . PHP_EOL);
+
+            self::writeToStream(self::getGenericLoggingPath() . DIRECTORY_SEPARATOR . "runtime", $output);
         }
 
         /**
@@ -404,5 +413,21 @@
 
             trigger_error("The exception has been dumped to $dump_file_path", E_USER_NOTICE);
             return $dump_id;
+        }
+
+        /**
+         * @return bool|null
+         */
+        public static function getStdout(): ?bool
+        {
+            return self::$stdout;
+        }
+
+        /**
+         * @param bool|null $stdout
+         */
+        public static function setStdout(?bool $stdout): void
+        {
+            self::$stdout = $stdout;
         }
     }
