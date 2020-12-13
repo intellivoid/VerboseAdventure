@@ -38,7 +38,19 @@
         },
         {
             "required": true,
+            "file": "Classes/ErrorHandler.php"
+        },
+        {
+            "required": true,
             "file": "Exceptions/CannotFindSystemLogDirectoryException.php"
+        },
+        {
+            "required": true,
+            "file": "Exceptions/SilencedErrorException.php"
+        },
+        {
+            "required": true,
+            "file": "Exceptions/FatalErrorException.php"
         },
         {
             "required": true,
@@ -49,5 +61,7 @@
             "file": "Objects/Event.php"
         }
     ],
-    "files": []
+    "files": [
+        "package.json"
+    ]
 }

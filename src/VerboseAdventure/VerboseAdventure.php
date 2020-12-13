@@ -37,23 +37,18 @@
         private ?string $exception_dumps_path;
 
         /**
-         * @var string|null
-         */
-        private ?string $log_archive_path;
-
-        /**
          * Indicates if logging events should print to stdout
          *
-         * @var bool
+         * @var bool|null
          */
-        public bool $stdout;
+        public $stdout;
 
         /**
          * The Unix Timestamp for when this class checked the structure of the file path
          *
-         * @var int
+         * @var int|null
          */
-        private int $last_check_timestamp;
+        public static $last_check_timestamp;
 
         /**
          * VerboseAdventure constructor.
@@ -71,10 +66,12 @@
          *
          * @return bool
          * @throws CannotFindSystemLogDirectoryException
+         * @noinspection DuplicatedCode
          */
         private function createStructure(): bool
         {
             $path = null;
+
             if (strtoupper(substr(PHP_OS, 0, 3)) === "WIN")
             {
 
@@ -103,7 +100,11 @@
 
             $this->logging_path = $path . DIRECTORY_SEPARATOR . "php" . DIRECTORY_SEPARATOR . Converter::nameSafe($this->name);
             $this->exception_dumps_path = $this->logging_path . DIRECTORY_SEPARATOR . "exceptions";
-            $this->log_archive_path = $this->logging_path . DIRECTORY_SEPARATOR . "archives";
+
+            if(file_exists($path . DIRECTORY_SEPARATOR . "php") == false)
+            {
+                mkdir($path . DIRECTORY_SEPARATOR . "php");
+            }
 
             if(file_exists($this->logging_path) == false)
             {
@@ -115,22 +116,54 @@
                 mkdir($this->exception_dumps_path);
             }
 
-            if(file_exists($this->log_archive_path) == false)
-            {
-                mkdir($this->log_archive_path);
-            }
-
             return true;
         }
 
         /**
-         * @return string|null
-         * @noinspection PhpUnused
+         * Returns the generic system logging path
+         *
+         * @return string
+         * @throws CannotFindSystemLogDirectoryException
+         * @noinspection DuplicatedCode
          */
-        public function getLogArchivePath(): ?string
+        public static function getGenericLoggingPath(): string
         {
-            return $this->log_archive_path;
+            $path = null;
+
+            if (strtoupper(substr(PHP_OS, 0, 3)) === "WIN")
+            {
+
+                $path = realpath(DIRECTORY_SEPARATOR);
+
+                if(file_exists($path . "logs") == false)
+                {
+                    mkdir($path . "logs");
+                    $path = realpath(DIRECTORY_SEPARATOR . "logs");
+                }
+            }
+            else
+            {
+                $path = realpath(DIRECTORY_SEPARATOR . "var" . DIRECTORY_SEPARATOR . "log");
+            }
+
+            if($path == false)
+            {
+                throw new CannotFindSystemLogDirectoryException("There was an error while trying to verify the path '$path'");
+            }
+
+            if(file_exists($path) == false)
+            {
+                throw new CannotFindSystemLogDirectoryException("Cannot find the path '$path'");
+            }
+
+            if(file_exists($path . DIRECTORY_SEPARATOR . "php") == false)
+            {
+                mkdir($path . DIRECTORY_SEPARATOR . "php");
+            }
+
+            return $path . DIRECTORY_SEPARATOR . "php";
         }
+
 
         /**
          * @return string|null
@@ -160,18 +193,27 @@
 
         /**
          * Prepares the logging stream and archives the current log if necessary
+         *
+         * @param string $path
+         * @param bool $skip_last_check
          */
-        private function prepareLoggingStream()
+        private static function prepareLoggingStream(string $path, bool $skip_last_check=false)
         {
             // To speed up the process, this will only be processed every 10 minutes ASSUMING if the
             // the program is running for that long
-            if(($this->last_check_timestamp + 600) > time())
+            if($skip_last_check == false)
             {
-                return;
+                if(self::$last_check_timestamp !== null)
+                {
+                    if((self::$last_check_timestamp + 600) > time())
+                    {
+                        return;
+                    }
+                }
             }
 
-            $date_file_path = $this->logging_path . DIRECTORY_SEPARATOR . ".date";
-            $stream_file_path = $this->logging_path . DIRECTORY_SEPARATOR . "main.log";
+            $date_file_path = $path . DIRECTORY_SEPARATOR . ".date";
+            $stream_file_path = $path . DIRECTORY_SEPARATOR . "main.log";
 
             if(file_exists($stream_file_path) == false)
             {
@@ -189,7 +231,12 @@
 
                 if($current_date !== $stated_date)
                 {
-                    $archive_path = $this->log_archive_path . DIRECTORY_SEPARATOR . $stated_date . ".log";
+                    if(file_exists($path . DIRECTORY_SEPARATOR . "archives") == false)
+                    {
+                        mkdir($path . DIRECTORY_SEPARATOR . "archives");
+                    }
+
+                    $archive_path = $path . DIRECTORY_SEPARATOR . "archives" . DIRECTORY_SEPARATOR . $stated_date . ".log";
 
                     if(file_exists($archive_path) == false)
                     {
@@ -200,18 +247,19 @@
                 }
             }
 
-            $this->last_check_timestamp = (int)time();
+            self::$last_check_timestamp = (int)time();
         }
 
         /**
          * Writes the current input to the stream
          *
+         * @param string $logging_path
          * @param string $input
          */
-        private function writeToStream(string $input)
+        public static function writeToStream(string $logging_path, string $input)
         {
-            $this->prepareLoggingStream();
-            $stream_file_path = $this->logging_path . DIRECTORY_SEPARATOR . "main.log";
+            self::prepareLoggingStream($logging_path);
+            $stream_file_path = $logging_path . DIRECTORY_SEPARATOR . "main.log";
             file_put_contents($stream_file_path, $input, FILE_APPEND);
         }
 
@@ -220,7 +268,7 @@
          * @param string $message
          * @param string|null $module
          */
-        public function log(string $event_type, string $message, ?string $module)
+        public function log(string $event_type, string $message, ?string $module=null)
         {
             if(Validator::eventType($event_type) == false)
             {
@@ -235,14 +283,16 @@
             $EventObject->timestamp = (int)time();
 
 
-            $this->writeToStream($EventObject->__toString([
+            self::writeToStream($this->logging_path, $EventObject->toString([
                 EventToStringOptions::IncludeVendor,
                 EventToStringOptions::IncludeModule,
                 EventToStringOptions::IncludeTimestamp,
                 EventToStringOptions::IncludeEventType,
-                EventToStringOptions::IncludeInfoEventType
+                EventToStringOptions::IncludeInfoEventType,
+                EventToStringOptions::IncludeNewLine
             ]));
         }
+
 
         /**
          * Dumps the exception and optionally logs the event
@@ -255,9 +305,17 @@
         public function logException(Exception $exception, ?string $module, bool $log_event=true): string
         {
             $dump = Converter::exceptionToDump($exception, $this->name, $module);
-            $dump_json = json_encode($dump);
-            $dump_id = hash("sha256", $dump_json . (int)time());
-            $dump_file_path = $this->exception_dumps_path . DIRECTORY_SEPARATOR . $dump_id . ".json";
+            $dump_json = json_encode($dump, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $dump_id = date('m-d-Y_hia') . "_" . hash("crc32b", $dump_json . (int)time());
+
+            if($module !== null)
+            {
+                $dump_file_path = $this->exception_dumps_path . DIRECTORY_SEPARATOR . Converter::nameSafe($module) . "_" . $dump_id . ".json";
+            }
+            else
+            {
+                $dump_file_path = $this->exception_dumps_path . DIRECTORY_SEPARATOR . $dump_id . ".json";
+            }
 
             file_put_contents($dump_file_path, $dump_json);
 
@@ -266,6 +324,85 @@
                 $this->log(EventType::ERROR, $exception->getMessage() . " => '$dump_file_path' ($dump_id)", $module);
             }
 
+            return $dump_id;
+        }
+
+        /**
+         * @param string $event_type
+         * @param string $message
+         * @param string|null $module
+         * @throws CannotFindSystemLogDirectoryException
+         * @throws CannotFindSystemLogDirectoryException
+         */
+        public static function logGlobal(string $event_type, string $message, ?string $module=null)
+        {
+            if(Validator::eventType($event_type) == false)
+            {
+                $event_type = EventType::UNKNOWN;
+            }
+
+            $EventObject = new Event();
+            $EventObject->vendor_name = "runtime";
+            $EventObject->module = $module;
+            $EventObject->message = $message;
+            $EventObject->event_type = $event_type;
+            $EventObject->timestamp = (int)time();
+
+
+            self::writeToStream(self::getGenericLoggingPath() . DIRECTORY_SEPARATOR . "runtime", $EventObject->toString([
+                EventToStringOptions::IncludeVendor,
+                EventToStringOptions::IncludeModule,
+                EventToStringOptions::IncludeTimestamp,
+                EventToStringOptions::IncludeEventType,
+                EventToStringOptions::IncludeInfoEventType,
+                EventToStringOptions::IncludeNewLine
+            ]));
+        }
+
+        /**
+         * This methods logs an unexpected but captured exception
+         *
+         * @param Exception $exception
+         * @param bool $log_event
+         * @param string|null $module
+         * @return string
+         * @throws CannotFindSystemLogDirectoryException
+         */
+        public static function logCapturedException(Exception $exception, bool $log_event=true, ?string $module=null): string
+        {
+            $dump = Converter::exceptionToDump($exception, "runtime");
+            $dump_json = json_encode($dump, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $dump_id = date('m-d-Y_hia') . "_" . hash("crc32b", $dump_json . (int)time());
+            $runtime_path = self::getGenericLoggingPath() . DIRECTORY_SEPARATOR . "runtime";
+            $exceptions_path = $runtime_path . DIRECTORY_SEPARATOR . "exceptions";
+
+            if($module !== null)
+            {
+                $dump_file_path = $exceptions_path . DIRECTORY_SEPARATOR . Converter::nameSafe($module) . "_" . $dump_id . ".json";
+            }
+            else
+            {
+                $dump_file_path = $exceptions_path . DIRECTORY_SEPARATOR . $dump_id . ".json";
+            }
+
+            if(file_exists($runtime_path) == false)
+            {
+                mkdir($runtime_path);
+            }
+
+            if(file_exists($exceptions_path) == false)
+            {
+                mkdir($exceptions_path);
+            }
+
+            file_put_contents($dump_file_path, $dump_json);
+
+            if($log_event)
+            {
+                self::logGlobal(EventType::ERROR, $exception->getMessage() . " => '$dump_file_path' ($dump_id)", $module);
+            }
+
+            trigger_error("The exception has been dumped to $dump_file_path", E_USER_NOTICE);
             return $dump_id;
         }
     }

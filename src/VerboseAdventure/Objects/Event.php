@@ -54,7 +54,7 @@
          * @param EventToStringOptions[] $options
          * @return string
          */
-        public function __toString(array $options): string
+        public function toString(array $options): string
         {
             if(in_array(EventToStringOptions::PreserveDoubleQuotes, $options))
             {
@@ -106,6 +106,11 @@
                 {
                     $results = "[" . Converter::eventTypeToString($this->event_type) . "] " . $results;
                 }
+            }
+
+            if(in_array(EventToStringOptions::IncludeNewLine, $options))
+            {
+                $results .= "\n";
             }
 
             return $results;

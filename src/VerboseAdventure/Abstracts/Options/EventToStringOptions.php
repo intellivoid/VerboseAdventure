@@ -38,4 +38,9 @@
          * Preserves double quotes and won't automatically convert them to single quotes
          */
         const PreserveDoubleQuotes = 0x005;
+
+        /**
+         * Includes a new line at the end of the string
+         */
+        const IncludeNewLine = 0x006;
     }

@@ -63,14 +63,20 @@
          * @param array $options
          * @return array
          */
-        public static function exceptionToDump(Exception $exception, ?string $vendor_name, ?string $module_name, array $options=[]): array
+        public static function exceptionToDump(Exception $exception, ?string $vendor_name, ?string $module_name=null, array $options=[]): array
         {
             $Results = array(
-                "vendor_name" => self::nameSafe($vendor_name),
-                "module_name" => self::nameSafe($module_name),
+                "vendor_name" => null,
+                "module_name" => null,
                 "timestamp" => (int)time(),
                 "exceptions" => []
             );
+
+            if($vendor_name != null)
+                $Results["vendor_name"] = Converter::nameSafe($vendor_name);
+
+            if($module_name != null)
+                $Results["module_name"] = Converter::nameSafe($module_name);
 
             $current_exception = $exception;
 
@@ -95,6 +101,42 @@
                     $current_exception = $current_exception->getPrevious();
                 }
             }
+
+            if(in_array(ExceptionToDumpOptions::IncludeCoreConstants, $options))
+            {
+                $DefinedConstants = get_defined_constants(true);
+                if(isset($DefinedConstants["Core"]))
+                {
+                    $Results["core_constants"] = $DefinedConstants["Core"];
+                }
+            }
+
+            if(in_array(ExceptionToDumpOptions::IncludeDefinedVariables, $options))
+            {
+                $Results["defined_variables"] = get_defined_vars();
+            }
+
+            if(in_array(ExceptionToDumpOptions::IncludeDefinedFunctions, $options))
+            {
+                $Results["defined_functions"] = get_defined_functions();
+            }
+
+            return $Results;
+        }
+
+        /**
+         * Turns a captured exception to a dump
+         *
+         * @param array $data
+         * @param array $options
+         * @return array
+         */
+        public static function captureToDump(array $data, array $options=[]): array
+        {
+            $Results = array(
+                "timestamp" => (int)time(),
+                "exception" => $data
+            );
 
             if(in_array(ExceptionToDumpOptions::IncludeCoreConstants, $options))
             {
