@@ -7,4 +7,6 @@
     \VerboseAdventure\VerboseAdventure::setStdout(true);
     \VerboseAdventure\Classes\ErrorHandler::registerHandlers();
     \VerboseAdventure\VerboseAdventure::logGlobal(\VerboseAdventure\Abstracts\EventType::INFO, "Hello!");
+    \VerboseAdventure\VerboseAdventure::logGlobal(\VerboseAdventure\Abstracts\EventType::INFO, "Hello!");
+    \VerboseAdventure\VerboseAdventure::logGlobal(\VerboseAdventure\Abstracts\EventType::INFO, "Hello!");
     $test->test;
