@@ -44,6 +44,13 @@
         public static $stdout = false;
 
         /**
+         * Indicates if the logging messages should be simple if printed to stdout
+         *
+         * @var bool
+         */
+        public static $simple_stdout = false;
+
+        /**
          * The Unix Timestamp for when this class checked the structure of the file path
          *
          * @var int|null
@@ -162,6 +169,22 @@
             }
 
             return $path . DIRECTORY_SEPARATOR . "php";
+        }
+
+        /**
+         * @return bool
+         */
+        public static function isSimpleStdout(): bool
+        {
+            return self::$simple_stdout;
+        }
+
+        /**
+         * @param bool $simple_stdout
+         */
+        public static function setSimpleStdout(bool $simple_stdout): void
+        {
+            self::$simple_stdout = $simple_stdout;
         }
 
 
@@ -292,8 +315,22 @@
                 EventToStringOptions::IncludeNewLine
             ]);
 
-            if(self::$stdout)
+            if(self::$stdout && self::$simple_stdout == false)
                 print($output);
+
+            if(self::$stdout && self::$simple_stdout)
+            {
+                $simple_output = $EventObject->toString([
+                    EventToStringOptions::IncludeVendor,
+                    EventToStringOptions::IncludeModule,
+                    EventToStringOptions::IncludeEventType,
+                    EventToStringOptions::IncludeNewLine,
+                    EventToStringOptions::NoQuotedMessages
+                ]);
+
+                print($simple_output);
+            }
+
             self::writeToStream($this->logging_path, $output);
         }
 

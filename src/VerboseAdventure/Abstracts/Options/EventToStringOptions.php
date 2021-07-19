@@ -43,4 +43,9 @@
          * Includes a new line at the end of the string
          */
         const IncludeNewLine = 0x006;
+
+        /**
+         * Don't surround the messages in double quotes
+         */
+        const NoQuotedMessages = 0x007;
     }

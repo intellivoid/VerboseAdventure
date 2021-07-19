@@ -2,7 +2,7 @@
     "package": {
         "package_name": "net.intellivoid.verbose_adventure",
         "name": "VerboseAdventure",
-        "version": "1.0.0.2",
+        "version": "1.0.0.3",
         "author": "Zi Xing Narrakas",
         "organization": "Intellivoid",
         "description": "An advanced event logging library for PHP programs",

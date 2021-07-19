@@ -56,14 +56,22 @@
          */
         public function toString(array $options): string
         {
-            if(in_array(EventToStringOptions::PreserveDoubleQuotes, $options))
+            if(in_array(EventToStringOptions::NoQuotedMessages, $options))
             {
-                $results = "\"" . str_ireplace("\"", "'", $this->message) . "\"";
+                $results = $this->message;
             }
             else
             {
-                $results = "\"" . $this->message. "\"";
+                if(in_array(EventToStringOptions::PreserveDoubleQuotes, $options))
+                {
+                    $results = "\"" . str_ireplace("\"", "'", $this->message) . "\"";
+                }
+                else
+                {
+                    $results = "\"" . $this->message . "\"";
+                }
             }
+
 
             if(in_array(EventToStringOptions::IncludeTimestamp, $options))
             {
