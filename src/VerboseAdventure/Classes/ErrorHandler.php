@@ -12,8 +12,12 @@ use InvalidArgumentException;
 use ReflectionException;
 use ReflectionProperty;
 use Throwable;
+use VerboseAdventure\Abstracts\BuiltinErrorLevels;
+use VerboseAdventure\Abstracts\ErrorFilterPresets;
+use VerboseAdventure\Abstracts\EventType;
 use VerboseAdventure\Exceptions\FatalErrorException;
 use VerboseAdventure\Exceptions\SilencedErrorException;
+use VerboseAdventure\Utilities\Converter;
 use VerboseAdventure\VerboseAdventure;
 use function array_slice;
 use function count;
@@ -97,6 +101,21 @@ final class ErrorHandler
      *                  in case a fatal error occurs to handle it
      */
     private static $reservedMemory;
+
+    /**
+     * @var BuiltinErrorLevels[]|string[]
+     */
+    private static $filter = [];
+
+    /**
+     * @var string[]
+     */
+    private static $last_errors = [];
+
+    /**
+     * @var bool
+     */
+    private static $ignore_duplicate_exceptions=false;
 
     /**
      * @var array List of error levels and their description
@@ -276,6 +295,9 @@ final class ErrorHandler
      */
     private function handleError(int $level, string $message, string $file, int $line, ?array $errcontext = []): bool
     {
+        if(in_array($level, self::$filter) == false)
+            return true;
+
         if (0 === (error_reporting() & $level))
         {
             $errorAsException = new SilencedErrorException(
@@ -285,6 +307,22 @@ final class ErrorHandler
         {
             $errorAsException = new ErrorException(
                 self::ERROR_LEVELS_DESCRIPTION[$level] . ': ' . $message, 0, $level, $file, $line);
+        }
+
+        if(self::$ignore_duplicate_exceptions)
+        {
+            $error_id = Converter::exceptionToTraceId($errorAsException);
+            if(in_array($error_id, self::$last_errors))
+            {
+                return true;
+            }
+            else
+            {
+                self::$last_errors[] = $error_id;
+
+                if(count(self::$last_errors) > 5)
+                    array_shift(self::$last_errors);
+            }
         }
 
         $backtrace = $this->cleanBacktraceFromErrorHandlerFrames(
@@ -301,9 +339,24 @@ final class ErrorHandler
             return false !== ($this->previousErrorHandler)($level, $message, $file, $line, $errcontext);
         }
 
-        VerboseAdventure::logCapturedException($errorAsException, true);
+        if(in_array($level, ErrorFilterPresets::ERRORS_ONLY))
+        {
+            VerboseAdventure::logCapturedException($errorAsException, true);
+        }
+        elseif(in_array($level, ErrorFilterPresets::WARNINGS_ONLY))
+        {
+            VerboseAdventure::logGlobal(EventType::WARNING, $errorAsException->getMessage(), $errorAsException->getFile() . ':' . $errorAsException->getLine());
+        }
+        elseif(in_array($level, ErrorFilterPresets::NOTICES_ONLY))
+        {
+            VerboseAdventure::logGlobal(EventType::INFO, $errorAsException->getMessage(), $errorAsException->getFile() . ':' . $errorAsException->getLine());
+        }
+        else
+        {
+            VerboseAdventure::logCapturedException($errorAsException, true);
+        }
 
-        return false;
+        return true;
     }
 
     /**
@@ -434,8 +487,10 @@ final class ErrorHandler
     /**
      * Registers the error handlers in the current scope
      */
-    public static function registerHandlers()
+    public static function registerHandlers(bool $ignore_duplicate_errors=true, array $error_filters=ErrorFilterPresets::ALL)
     {
+        self::$filter = $error_filters;
+        self::$ignore_duplicate_exceptions = $ignore_duplicate_errors;
         self::registerOnceFatalErrorHandler();
         self::registerOnceExceptionHandler();
         self::registerOnceErrorHandler();

@@ -235,6 +235,8 @@
                 }
             }
 
+            self::mkpath($path);
+
             $date_file_path = $path . DIRECTORY_SEPARATOR . ".date";
             $stream_file_path = $path . DIRECTORY_SEPARATOR . "main.log";
 
@@ -256,7 +258,7 @@
                 {
                     if(file_exists($path . DIRECTORY_SEPARATOR . "archives") == false)
                     {
-                        mkdir($path . DIRECTORY_SEPARATOR . "archives");
+                        self::mkpath($path . DIRECTORY_SEPARATOR . "archives");
                     }
 
                     $archive_path = $path . DIRECTORY_SEPARATOR . "archives" . DIRECTORY_SEPARATOR . $stated_date . ".log";
@@ -271,6 +273,17 @@
             }
 
             self::$last_check_timestamp = (int)time();
+        }
+
+        /**
+         * @param $path
+         * @return bool
+         */
+        private static function mkpath($path)
+        {
+            if(file_exists($path)) return true;
+            mkdir($path);
+            return (self::mkpath(dirname($path)) and mkdir($path));
         }
 
         /**
@@ -369,14 +382,14 @@
         }
 
         /**
-         * @param string $event_type
+         * @param string|int $event_type
          * @param string $message
          * @param string|null $module
          * @throws CannotFindSystemLogDirectoryException
          * @throws CannotFindSystemLogDirectoryException
          * @noinspection DuplicatedCode
          */
-        public static function logGlobal(string $event_type, string $message, ?string $module=null)
+        public static function logGlobal($event_type, string $message, ?string $module=null)
         {
             if(Validator::eventType($event_type) == false)
             {

@@ -2,7 +2,7 @@
     "package": {
         "package_name": "net.intellivoid.verbose_adventure",
         "name": "VerboseAdventure",
-        "version": "1.0.0.3",
+        "version": "1.0.0.4",
         "author": "Zi Xing Narrakas",
         "organization": "Intellivoid",
         "description": "An advanced event logging library for PHP programs",
@@ -18,11 +18,11 @@
     "components": [
         {
             "required": true,
-            "file": "Utilities/Converter.php"
+            "file": "Abstracts/BuiltinErrorLevels.php"
         },
         {
             "required": true,
-            "file": "Utilities/Validator.php"
+            "file": "Abstracts/ErrorFilterPresets.php"
         },
         {
             "required": true,
@@ -30,11 +30,11 @@
         },
         {
             "required": true,
-            "file": "Abstracts/Options/ExceptionToDumpOptions.php"
+            "file": "Abstracts/Options/EventToStringOptions.php"
         },
         {
             "required": true,
-            "file": "Abstracts/Options/EventToStringOptions.php"
+            "file": "Abstracts/Options/ExceptionToDumpOptions.php"
         },
         {
             "required": true,
@@ -46,19 +46,27 @@
         },
         {
             "required": true,
-            "file": "Exceptions/SilencedErrorException.php"
-        },
-        {
-            "required": true,
             "file": "Exceptions/FatalErrorException.php"
         },
         {
             "required": true,
-            "file": "VerboseAdventure.php"
+            "file": "Exceptions/SilencedErrorException.php"
         },
         {
             "required": true,
             "file": "Objects/Event.php"
+        },
+        {
+            "required": true,
+            "file": "Utilities/Converter.php"
+        },
+        {
+            "required": true,
+            "file": "Utilities/Validator.php"
+        },
+        {
+            "required": true,
+            "file": "VerboseAdventure.php"
         }
     ],
     "files": [

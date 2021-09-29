@@ -159,4 +159,18 @@
 
             return $Results;
         }
+
+        /**
+         * Attempts to calculate the trace ID of the exception to
+         *
+         * @param Exception $e
+         * @return string
+         */
+        public static function exceptionToTraceId(Exception $e): string
+        {
+            if($e->getTraceAsString() == null)
+                return hash('crc32', (string)null);
+
+            return hash('crc32', $e->getTraceAsString());
+        }
     }
